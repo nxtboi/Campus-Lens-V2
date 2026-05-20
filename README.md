@@ -71,7 +71,7 @@ To download, configure, and boot CampusLens on your local workstation:
 ### 1. Retrieve & Install Dependencies
 ```bash
 # Clone the repository and navigate to root
-git clone <your-repository-url>
+git clone https://github.com/nxtboi/Campus-Lens-V2.git
 cd campuslens
 
 # Install development & platform dependencies
