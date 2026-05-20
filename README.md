@@ -97,7 +97,7 @@ Launches the full-stack server using Express server running Vite as an internal 
 ```bash
 npm run dev
 ```
-Open [http://localhost:3000](http://localhost:3000) to check your local live changes!
+Open [https://campus-lens-v2.vercel.app/](https://campus-lens-v2.vercel.app/) to check your local live changes!
 
 ---
 
