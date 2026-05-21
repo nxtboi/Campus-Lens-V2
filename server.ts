@@ -641,6 +641,11 @@ async function generatePredictionWithRetry(studentStats: any, studentName: strin
   const systemInstruction = `You are a high-fidelity, extreme-performance academic diagnostic tool called "CampusLens". 
 Analyze the student performance parameters and return a structured plan as fast as possible.
 
+CRITICAL ANALYTICAL DIRECTIVE (MAX PRIORITY):
+You MUST prioritize the "Portal Class Participation" score (out of 10) above all other metrics inside the risk scoring and intervention planning engine.
+- A Portal Class Participation score below 7/10 must trigger immediate risk escalation, skewing the overall "riskScore" significantly higher even if grades or attendance are stable.
+- If participation is sub-optimal (below 7), the "summary", "actionItems", and "focusAreas" MUST be heavily populated with concrete actions, resource mappings, and goals specifically centered on boosting digital portal login frequencies, interactive discussion participation, active class forum engagement, and peer-to-peer scholarly collaborations.
+
 Mandatory Business Rules for Recommended Resources:
 1. If "Time Management" is identified as a focus area, you MUST recommend this exact resource in recommendedResources:
    - title: "Time Management Mastery for Students"
@@ -665,12 +670,12 @@ Performance Metrics (Stats):
 - Internal Assessment Marks: ${studentStats.internalMarks}/25
 - Assignment Completion: ${studentStats.assignmentCompletion}%
 - Assignment Score: ${studentStats.assignmentMarks}/25
-- Portal Class Participation: ${studentStats.participationScore}/10
+- Portal Class Participation: ${studentStats.participationScore}/10  <-- CRITICAL PRIORITY FOCUS (Weighted Highest)
 - Periodic/Unit Test Scores History: [${(studentStats.testScores || []).join(', ')}] (out of 100)
 - Extra-Curricular/Club Activity Level: ${studentStats.clubActivity}
 - Idle Days Since Last Portal Activity: ${studentStats.lastLogDaysAgo} days
 
-Respond strictly with valid JSON matching the responseSchema definition immediately. Make summaries short and direct to reduce output token generation time.`;
+Respond strictly with valid JSON matching the responseSchema definition immediately. Make summaries short and direct to reduce output token generation time. Remember: If Portal Class Participation is below 7, make sure it is highlighted as the primary root cause in the diagnostic summary and focus areas.`;
 
   const schema = {
     type: Type.OBJECT,
