@@ -390,7 +390,8 @@ function saveStudentsToCSV(students: Student[]) {
   const headers = [
     'id', 'name', 'rollNumber', 'branch', 'semester',
     'stats_attendance', 'stats_internalMarks', 'stats_assignmentCompletion', 'stats_assignmentMarks', 'stats_participationScore', 'stats_testScores', 'stats_clubActivity', 'stats_lastLogDaysAgo',
-    'riskScore', 'interventionPlan_summary', 'interventionPlan_actionItems', 'interventionPlan_focusAreas', 'interventionPlan_predictedOutcome', 'interventionPlan_recommendedResources'
+    'riskScore', 'interventionPlan_summary', 'interventionPlan_actionItems', 'interventionPlan_focusAreas', 'interventionPlan_predictedOutcome', 'interventionPlan_recommendedResources',
+    'stats_previousAttendance', 'stats_pastPerformance'
   ];
   
   const lines = [headers.join(',')];
@@ -414,7 +415,9 @@ function saveStudentsToCSV(students: Student[]) {
       escapeCSV(stud.interventionPlan.actionItems),
       escapeCSV(stud.interventionPlan.focusAreas),
       escapeCSV(stud.interventionPlan.predictedOutcome),
-      escapeCSV(stud.interventionPlan.recommendedResources)
+      escapeCSV(stud.interventionPlan.recommendedResources),
+      escapeCSV(stud.stats.previousAttendance !== undefined ? stud.stats.previousAttendance : stud.stats.attendance),
+      escapeCSV(stud.stats.pastPerformance !== undefined ? stud.stats.pastPerformance : 7.5)
     ];
     lines.push(row.join(','));
   }
@@ -452,7 +455,9 @@ function loadStudentsFromCSV(): Student[] {
             participationScore: Number(cells[9]),
             testScores: JSON.parse(cells[10]),
             clubActivity: cells[11] as any,
-            lastLogDaysAgo: Number(cells[12])
+            lastLogDaysAgo: Number(cells[12]),
+            previousAttendance: cells[19] !== undefined ? Number(cells[19]) : Number(cells[5]),
+            pastPerformance: cells[20] !== undefined ? Number(cells[20]) : 7.5
           },
           riskScore: Number(cells[13]),
           interventionPlan: {
@@ -482,12 +487,14 @@ initDB();
 
 // --- Rule-based Heuristic Fallback Analysis ---
 function calculateHeuristicIntervention(stats: any, name: string) {
-  const attRisk = Math.max(0, (90 - stats.attendance) * 1.5);
-  const marksRisk = Math.max(0, (20 - stats.internalMarks) * 2);
-  const assignRisk = Math.max(0, (85 - stats.assignmentCompletion) * 0.3);
-  const logRisk = Math.min(15, stats.lastLogDaysAgo * 0.8);
+  // Participation-weighted risk prioritizing engagement score out of 10
+  const partRisk = Math.max(0, (9 - stats.participationScore) * 6.5); // Max of ~58 points risk skew for sub-optimal participation
+  const attRisk = Math.max(0, (90 - stats.attendance) * 1.2);
+  const marksRisk = Math.max(0, (20 - stats.internalMarks) * 1.5);
+  const assignRisk = Math.max(0, (85 - stats.assignmentCompletion) * 0.25);
+  const logRisk = Math.min(12, stats.lastLogDaysAgo * 0.6);
   
-  let riskScore = Math.round(attRisk + marksRisk + assignRisk + logRisk);
+  let riskScore = Math.round(partRisk + attRisk + marksRisk + assignRisk + logRisk);
   riskScore = Math.min(100, Math.max(0, riskScore));
   
   const actionItems: string[] = [];
@@ -496,21 +503,32 @@ function calculateHeuristicIntervention(stats: any, name: string) {
   let summary = "";
   let predictedOutcome = "";
   
-  const needsAcademicRecovery = stats.attendance < 75 || stats.internalMarks < 10;
+  const lowParticipation = stats.participationScore < 7;
+  const needsAcademicRecovery = stats.attendance < 75 || stats.internalMarks < 10 || lowParticipation;
   
   if (riskScore >= 70 || needsAcademicRecovery) {
-    if (riskScore < 70) riskScore = 75; // Force high risk per specs if fallback triggers
-    summary = `${name} is analyzed as high academic risk due to low attendance (${stats.attendance}%) and critical performance in internal marks (${stats.internalMarks}/25). Prompt guidance is mandatory.`;
+    if (riskScore < 70) riskScore = 72;
+    
+    if (lowParticipation) {
+      summary = `${name} is currently flagged at HIGH academic risk. Deficient portal class participation (${stats.participationScore}/10) is flagged as the absolute highest priority warning factor requiring urgent intervention.`;
+      focusAreas.push("Portal Engagement Recovery");
+      focusAreas.push("Active Class Participation");
+      actionItems.push("Establish a mandatory daily login and material interaction routine on the university learning management portal.");
+      actionItems.push("Achieve active participation metrics by submitting at least two forum comments or discussion posts per week.");
+    } else {
+      summary = `${name} is currently flagged at HIGH academic risk. Sub-optimal grades and lack of portal log action present major warning indicators.`;
+    }
+    
     focusAreas.push("Time Management");
     focusAreas.push("Academic Recovery");
-    focusAreas.push("Continuous Assessment Tracking");
+    focusAreas.push("Class Regularisation");
     
     actionItems.push("Schedule an immediate academic regularisation contract with the department chair.");
     actionItems.push("Attend mandatory remedial classes during practical hours.");
     actionItems.push("Submit missing assignment portfolio work under a dedicated tutor's guidance.");
     actionItems.push("Engage with the student wellness center on managing exam stress.");
     
-    predictedOutcome = "Intensive corrective monitoring is computed to boost overall test scores to 65%+ and resolve severe risk trends within 4 weeks.";
+    predictedOutcome = "Intense, scheduled forum interaction logs and active portal study logs will recover engagement and elevate overall outcomes above risk metrics.";
     
     recommendedResources.push({
       title: "Time Management Mastery for Students",
@@ -528,15 +546,22 @@ function calculateHeuristicIntervention(stats: any, name: string) {
       type: "contact"
     });
   } else if (riskScore >= 35) {
-    summary = `${name} shows moderate risk profiles. Stable attendance is present (${stats.attendance}%), but attention towards weekly assignments and unit-test marks is strongly recommended below par levels.`;
+    if (lowParticipation) {
+      summary = `${name} exhibits moderate scholastic risk levels driven directly by borderline class participation logs (${stats.participationScore}/10).`;
+      focusAreas.push("Active Class Participation");
+      actionItems.push("Engage routinely with uploaded presentation decks and lecture session notes on weekends.");
+    } else {
+      summary = `${name} represents moderate risk metrics. Focused tutorials and submission checking is suggested.`;
+    }
+    
     focusAreas.push("Time Management");
-    focusAreas.push("Foundational Problem Solving");
+    focusAreas.push("Continuous Assessment Drill");
     
     actionItems.push("Formulate a customized study routine with the guidance counselor.");
     actionItems.push("Attend bi-weekly student peer discussions on hard syllabus topics.");
     actionItems.push("Complete pending continuous evaluation modules.");
     
-    predictedOutcome = "Proactive study planning is estimated to boost unit test outcomes by 15% and minimize potential long-term risk.";
+    predictedOutcome = "Consistent weekly progress evaluations are estimated to lower risk score indicators to low brackets.";
     
     recommendedResources.push({
       title: "Time Management Mastery for Students",
@@ -549,9 +574,9 @@ function calculateHeuristicIntervention(stats: any, name: string) {
       type: "contact"
     });
   } else {
-    summary = `${name} displays optimal progress with excellent scores. Attendance of ${stats.attendance}% and stellar internal marks indicate superb subject engagement.`;
-    focusAreas.push("Advanced Theoretical Research");
-    focusAreas.push("Industry Collaborative Labs");
+    summary = `${name} has shown outstanding success. Maintain the work!`;
+    focusAreas.push("Advanced Project Ideation");
+    focusAreas.push("Competency Development");
     
     actionItems.push("Promote student to serve as peer mentor for critical status juniors.");
     actionItems.push("Encourage registration for national-level developer hackathons.");
@@ -792,6 +817,8 @@ app.post('/api/students', (req, res) => {
       testScores: [70, 75, 72, 78],
       clubActivity: 'Medium' as const,
       lastLogDaysAgo: 2,
+      previousAttendance: 75,
+      pastPerformance: 7.5,
       ...newStudentData.stats
     };
 
