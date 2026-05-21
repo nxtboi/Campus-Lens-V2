@@ -489,7 +489,7 @@ initDB();
 function calculateHeuristicIntervention(stats: any, name: string) {
   // Participation-weighted risk prioritizing engagement score out of 10
   const partRisk = Math.max(0, (9 - stats.participationScore) * 6.5); // Max of ~58 points risk skew for sub-optimal participation
-  const attRisk = Math.max(0, (90 - stats.attendance) * 1.2);
+  const attRisk = Math.max(0, (90 - stats.attendance) * 0.4); // Down-weighted attendance to remove priority
   const marksRisk = Math.max(0, (20 - stats.internalMarks) * 1.5);
   const assignRisk = Math.max(0, (85 - stats.assignmentCompletion) * 0.25);
   const logRisk = Math.min(12, stats.lastLogDaysAgo * 0.6);
@@ -504,7 +504,7 @@ function calculateHeuristicIntervention(stats: any, name: string) {
   let predictedOutcome = "";
   
   const lowParticipation = stats.participationScore < 7;
-  const needsAcademicRecovery = stats.attendance < 75 || stats.internalMarks < 10 || lowParticipation;
+  const needsAcademicRecovery = stats.internalMarks < 10 || lowParticipation; // Removed attendance priority trigger
   
   if (riskScore >= 70 || needsAcademicRecovery) {
     if (riskScore < 70) riskScore = 72;
@@ -676,7 +676,7 @@ Mandatory Business Rules for Recommended Resources:
    - title: "Time Management Mastery for Students"
    - url: "https://www.youtube.com/watch?v=b8n-wpvBjrw"
    - type: "video"
-2. If academic recovery is required (attendance < 75% or low test scores), you MUST recommend this exact resource:
+2. If academic recovery is required (low grades or low test scores), you MUST recommend this exact resource:
    - title: "Strategies for Recovering from Academic Challenges"
    - url: "https://www.iwantmydiploma.com/blog/bouncing-back-strategies-for-recovering-from-academic-challenges/"
    - type: "article"
