@@ -59,6 +59,8 @@ export default function StudentDirectoryTab({
   const [formParticipation, setFormParticipation] = useState(6);
   const [formClubActivity, setFormClubActivity] = useState<'High' | 'Medium' | 'Low'>('Medium');
   const [formLastLog, setFormLastLog] = useState(2);
+  const [formPreviousAttendance, setFormPreviousAttendance] = useState(75);
+  const [formPastPerformance, setFormPastPerformance] = useState(7.5);
 
   // Filter Data
   const filteredStudents = students.filter(student => {
@@ -101,7 +103,9 @@ export default function StudentDirectoryTab({
         participationScore: Number(formParticipation),
         testScores: [70, 75, 72, 78], // seed defaults
         clubActivity: formClubActivity,
-        lastLogDaysAgo: Number(formLastLog)
+        lastLogDaysAgo: Number(formLastLog),
+        previousAttendance: Number(formPreviousAttendance),
+        pastPerformance: Number(formPastPerformance)
       }
     });
 
@@ -117,6 +121,8 @@ export default function StudentDirectoryTab({
     setFormParticipation(6);
     setFormClubActivity('Medium');
     setFormLastLog(2);
+    setFormPreviousAttendance(75);
+    setFormPastPerformance(7.5);
     setIsAddModalOpen(false);
   };
 
@@ -134,6 +140,8 @@ export default function StudentDirectoryTab({
     setFormParticipation(student.stats.participationScore);
     setFormClubActivity(student.stats.clubActivity);
     setFormLastLog(student.stats.lastLogDaysAgo);
+    setFormPreviousAttendance(student.stats.previousAttendance ?? student.stats.attendance);
+    setFormPastPerformance(student.stats.pastPerformance ?? 7.5);
     setIsEditModalOpen(true);
   };
 
@@ -155,7 +163,9 @@ export default function StudentDirectoryTab({
         assignmentMarks: Number(formAssignMarks),
         participationScore: Number(formParticipation),
         clubActivity: formClubActivity,
-        lastLogDaysAgo: Number(formLastLog)
+        lastLogDaysAgo: Number(formLastLog),
+        previousAttendance: Number(formPreviousAttendance),
+        pastPerformance: Number(formPastPerformance)
       }
     });
 
@@ -347,7 +357,10 @@ export default function StudentDirectoryTab({
                         </div>
                         <div>
                           <span className="font-bold text-gray-950 block">{student.name}</span>
-                          <span className="text-xs font-semibold text-gray-400">Roll: {student.rollNumber}</span>
+                          <span className="text-xs font-semibold text-gray-400 block">Roll: {student.rollNumber}</span>
+                          <span className="text-[10px] font-extrabold bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded-lg inline-block mt-1 border border-blue-100/50">
+                            Past Performance: {student.stats.pastPerformance ?? 7.5} CGPA
+                          </span>
                         </div>
                       </div>
                     </td>
@@ -364,6 +377,9 @@ export default function StudentDirectoryTab({
                         <span className={`font-bold text-sm ${student.stats.attendance < 75 ? 'text-red-600' : 'text-gray-900'}`}>
                           {student.stats.attendance}%
                         </span>
+                        <div className="text-[10px] text-gray-400 font-bold block leading-tight mt-0.5">
+                          Prev Sem: {student.stats.previousAttendance ?? student.stats.attendance}%
+                        </div>
                         <div className="w-16 h-1.5 bg-gray-100 rounded-full mt-1 overflow-hidden mx-auto">
                           <div 
                             className={`h-full rounded-full ${student.stats.attendance < 75 ? 'bg-red-500' : 'bg-emerald-500'}`}
@@ -569,6 +585,39 @@ export default function StudentDirectoryTab({
                       className="w-full h-10 border border-gray-200 rounded-xl px-3 text-sm focus:outline-none"
                     />
                   </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 mb-1">Prev Sem Attendance %</label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={formPreviousAttendance}
+                      onChange={(e) => {
+                        let val = Number(e.target.value);
+                        if (val > 100) val = 100;
+                        if (val < 0) val = 0;
+                        setFormPreviousAttendance(val);
+                      }}
+                      className="w-full h-10 border border-gray-200 rounded-xl px-3 text-sm focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 mb-1">Past CGPA (0.0 - 10.0)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min={0}
+                      max={10}
+                      value={formPastPerformance}
+                      onChange={(e) => {
+                        let val = Number(e.target.value);
+                        if (val > 10) val = 10;
+                        if (val < 0) val = 0;
+                        setFormPastPerformance(val);
+                      }}
+                      className="w-full h-10 border border-gray-200 rounded-xl px-3 text-sm focus:outline-none"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -741,6 +790,39 @@ export default function StudentDirectoryTab({
                         if (val > 10) val = 10;
                         if (val < 0) val = 0;
                         setFormParticipation(val);
+                      }}
+                      className="w-full h-10 border border-gray-200 rounded-xl px-3 text-sm focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 mb-1">Prev Sem Attendance %</label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={formPreviousAttendance}
+                      onChange={(e) => {
+                        let val = Number(e.target.value);
+                        if (val > 100) val = 100;
+                        if (val < 0) val = 0;
+                        setFormPreviousAttendance(val);
+                      }}
+                      className="w-full h-10 border border-gray-200 rounded-xl px-3 text-sm focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 mb-1">Past CGPA (0.0 - 10.0)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min={0}
+                      max={10}
+                      value={formPastPerformance}
+                      onChange={(e) => {
+                        let val = Number(e.target.value);
+                        if (val > 10) val = 10;
+                        if (val < 0) val = 0;
+                        setFormPastPerformance(val);
                       }}
                       className="w-full h-10 border border-gray-200 rounded-xl px-3 text-sm focus:outline-none"
                     />
