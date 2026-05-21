@@ -28,6 +28,8 @@ export interface StudentStats {
   testScores: number[]; // unit test scores (0-100 values)
   clubActivity: 'High' | 'Medium' | 'Low';
   lastLogDaysAgo: number;
+  previousAttendance?: number; // percentage (0-100)
+  pastPerformance?: number; // past CGPA (0-10)
 }
 
 export interface Student {
