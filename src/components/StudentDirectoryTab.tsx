@@ -374,7 +374,7 @@ export default function StudentDirectoryTab({
                     {/* Attendance Index */}
                     <td className="py-4 px-4 text-center">
                       <div className="inline-block">
-                        <span className={`font-bold text-sm ${student.stats.attendance < 75 ? 'text-red-600' : 'text-gray-900'}`}>
+                        <span className={`font-bold text-sm ${student.stats.attendance < 60 ? 'text-rose-600' : 'text-gray-900'}`}>
                           {student.stats.attendance}%
                         </span>
                         <div className="text-[10px] text-gray-400 font-bold block leading-tight mt-0.5">
@@ -382,7 +382,7 @@ export default function StudentDirectoryTab({
                         </div>
                         <div className="w-16 h-1.5 bg-gray-100 rounded-full mt-1 overflow-hidden mx-auto">
                           <div 
-                            className={`h-full rounded-full ${student.stats.attendance < 75 ? 'bg-red-500' : 'bg-emerald-500'}`}
+                            className={`h-full rounded-full ${student.stats.attendance < 60 ? 'bg-rose-500' : 'bg-emerald-500'}`}
                             style={{ width: `${student.stats.attendance}%` }}
                           />
                         </div>
