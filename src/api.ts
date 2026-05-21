@@ -201,12 +201,14 @@ function saveLocalBackup(students: Student[]) {
 
 // Heuristic fallback matching backend logic
 function localCalculateHeuristic(stats: any, name: string): { riskScore: number; interventionPlan: any } {
-  const attRisk = Math.max(0, (90 - stats.attendance) * 1.5);
-  const marksRisk = Math.max(0, (20 - stats.internalMarks) * 2);
-  const assignRisk = Math.max(0, (85 - stats.assignmentCompletion) * 0.3);
-  const logRisk = Math.min(15, stats.lastLogDaysAgo * 0.8);
+  // Participation-weighted risk prioritizing engagement score out of 10
+  const partRisk = Math.max(0, (9 - stats.participationScore) * 6.5); // Max of ~58 points risk skew for sub-optimal participation
+  const attRisk = Math.max(0, (90 - stats.attendance) * 1.2);
+  const marksRisk = Math.max(0, (20 - stats.internalMarks) * 1.5);
+  const assignRisk = Math.max(0, (85 - stats.assignmentCompletion) * 0.25);
+  const logRisk = Math.min(12, stats.lastLogDaysAgo * 0.6);
   
-  let riskScore = Math.round(attRisk + marksRisk + assignRisk + logRisk);
+  let riskScore = Math.round(partRisk + attRisk + marksRisk + assignRisk + logRisk);
   riskScore = Math.min(100, Math.max(0, riskScore));
   
   const actionItems: string[] = [];
@@ -215,11 +217,22 @@ function localCalculateHeuristic(stats: any, name: string): { riskScore: number;
   let summary = "";
   let predictedOutcome = "";
   
-  const needsAcademicRecovery = stats.attendance < 75 || stats.internalMarks < 10;
+  const lowParticipation = stats.participationScore < 7;
+  const needsAcademicRecovery = stats.attendance < 75 || stats.internalMarks < 10 || lowParticipation;
   
   if (riskScore >= 70 || needsAcademicRecovery) {
-    if (riskScore < 70) riskScore = 75;
-    summary = `${name} is currently flagged at HIGH academic risk. Sub-optimal grades and lack of portal log action present major warning indicators.`;
+    if (riskScore < 70) riskScore = 72;
+    
+    if (lowParticipation) {
+      summary = `${name} is currently flagged at HIGH academic risk. Deficient portal class participation (${stats.participationScore}/10) is flagged as the absolute highest priority warning factor requiring urgent intervention.`;
+      focusAreas.push("Portal Engagement Recovery");
+      focusAreas.push("Active Class Participation");
+      actionItems.push("Establish a mandatory daily login and material interaction routine on the university learning management portal.");
+      actionItems.push("Achieve active participation metrics by submitting at least two forum comments or discussion posts per week.");
+    } else {
+      summary = `${name} is currently flagged at HIGH academic risk. Sub-optimal grades and lack of portal log action present major warning indicators.`;
+    }
+    
     focusAreas.push("Time Management");
     focusAreas.push("Academic Recovery");
     focusAreas.push("Class Regularisation");
@@ -227,7 +240,7 @@ function localCalculateHeuristic(stats: any, name: string): { riskScore: number;
     actionItems.push("Mandatory counseling meeting with the department counselor to discuss attendance regularisation.");
     actionItems.push("Submit pending assignments within a strict 5-day grace period.");
     
-    predictedOutcome = "Remedial scheduling will normalize attendance levels and recover core grades above threshold averages.";
+    predictedOutcome = "Intense, scheduled forum interaction logs and active portal study logs will recover engagement and elevate overall outcomes above risk metrics.";
     
     recommendedResources.push({
       title: "Time Management Mastery for Students",
@@ -245,7 +258,14 @@ function localCalculateHeuristic(stats: any, name: string): { riskScore: number;
       type: "contact"
     });
   } else if (riskScore >= 35) {
-    summary = `${name} represents moderate risk metrics. Focused tutorials and submission checking is suggested.`;
+    if (lowParticipation) {
+      summary = `${name} exhibits moderate scholastic risk levels driven directly by borderline class participation logs (${stats.participationScore}/10).`;
+      focusAreas.push("Active Class Participation");
+      actionItems.push("Engage routinely with uploaded presentation decks and lecture session notes on weekends.");
+    } else {
+      summary = `${name} represents moderate risk metrics. Focused tutorials and submission checking is suggested.`;
+    }
+    
     focusAreas.push("Time Management");
     focusAreas.push("Continuous Assessment Drill");
     
@@ -318,6 +338,8 @@ export const api = {
       testScores: [70, 75, 72, 78],
       clubActivity: 'Medium' as const,
       lastLogDaysAgo: 2,
+      previousAttendance: 75,
+      pastPerformance: 7.5,
       ...studentData.stats
     };
 
