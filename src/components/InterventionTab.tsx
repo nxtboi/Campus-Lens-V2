@@ -233,11 +233,6 @@ export default function InterventionTab({
                   <div>
                     <div className="flex items-center space-x-1.5">
                       <h3 className="font-extrabold text-xl text-gray-900 tracking-tight">{activeStudent.name}</h3>
-                      {activeStudent.stats.attendance < 75 && (
-                        <span className="px-1.5 py-0.5 bg-red-50 text-red-600 border border-red-100 text-[9px] uppercase font-black rounded tracking-wide animate-pulse">
-                          Attendance Alert
-                        </span>
-                      )}
                     </div>
                     <p className="text-xs font-bold text-gray-500 mt-0.5 bg-gray-50/80 px-2 py-0.5 rounded-md inline-block">
                       Roll {activeStudent.rollNumber} • {activeStudent.branch} • Semester {activeStudent.semester}
